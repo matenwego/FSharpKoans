@@ -1,5 +1,8 @@
 ﻿namespace FSharpKoans
 open FSharpKoans.Core
+open System.Collections.Generic
+open System
+open System.Globalization
 
 //---------------------------------------------------------------
 // Apply Your Knowledge!
@@ -59,7 +62,68 @@ module ``about the stock example`` =
     // using the F# Interactive window to check your progress.
 
     [<Koan>]
-    let YouGotTheAnswerCorrect() =
-        let result =  __
+    let YouGotKeysAndDataSeparated() =
+        let splitCommas (x:string) =
+            x.Split(',')
         
-        AssertEquality "2012-03-13" result
+        let keys = splitCommas stockData.Head
+        let data = List.map splitCommas stockData.Tail
+
+        AssertEquality keys [|"Date"; "Open"; "High"; "Low"; "Close"; "Volume"; "Adj Close"|]
+        AssertEquality data.[0] [|"2012-03-30";"32.40";"32.41";"32.04";"32.26";"31749400";"32.26"|]
+
+    [<Koan>]
+    let YouGotKeysAndDataSeparatedWithDictionary() =
+        let splitCommas (x:string) =
+            x.Split(',')
+        
+        let dictionaryCreator (keys:string[]) =
+            (fun (values:string[]) -> 
+            let dict = new Dictionary<string, string>()
+            for i = 0 to keys.Length - 1 do
+                dict.[keys.[i]] <- values.[i]
+            let openString = Double.Parse(dict.["Open"], CultureInfo.InvariantCulture)
+            let closeString = Double.Parse(dict.["Close"], CultureInfo.InvariantCulture)
+            let variance = sprintf "%.2f" (abs (openString - closeString))
+
+            dict.["Variance"] <- variance
+            dict)
+
+
+        let keys = splitCommas stockData.Head
+        let data = List.map splitCommas stockData.Tail
+        let keyCreator = dictionaryCreator keys
+        let dictionaryData = List.map keyCreator data
+
+        AssertEquality keys [|"Date"; "Open"; "High"; "Low"; "Close"; "Volume"; "Adj Close"|]
+        AssertEquality data.[0] [|"2012-03-30";"32.40";"32.41";"32.04";"32.26";"31749400";"32.26"|]
+        AssertEquality dictionaryData.[0].["Open"] "32.40"
+        AssertEquality dictionaryData.[0].["Variance"] "0.14"
+
+    [<Koan>]
+    let YouGotTheAnswerCorrect() =
+        let splitCommas (x:string) =
+            x.Split(',')
+        
+        let dictionaryCreator (keys:string[]) =
+            (fun (values:string[]) -> 
+            let dict = new Dictionary<string, string>()
+            for i = 0 to keys.Length - 1 do
+                dict.[keys.[i]] <- values.[i]
+            let openString = Double.Parse(dict.["Open"], CultureInfo.InvariantCulture)
+            let closeString = Double.Parse(dict.["Close"], CultureInfo.InvariantCulture)
+            let variance = sprintf "%.2f" (abs (openString - closeString))
+
+            dict.["Variance"] <- variance
+            dict)
+
+        let retriveMaxVariance (dictData:Dictionary<string,string>) =
+            Double.Parse(dictData.["Variance"], CultureInfo.InvariantCulture)
+
+        let keys = splitCommas stockData.Head
+        let data = List.map splitCommas stockData.Tail
+        let keyCreator = dictionaryCreator keys
+        let dictionaryData = List.map keyCreator data
+        let result =  List.maxBy retriveMaxVariance dictionaryData
+        
+        AssertEquality "2012-03-13" result.["Date"]
